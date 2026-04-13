@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Purigen API - Data Conversion Service</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input, button { padding: 12px; margin: 8px 0; width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; font-size: 16px; }
+        button:hover { background: #218838; }
+        .result { background: #e8f4f8; padding: 15px; border-radius: 5px; margin-top: 20px; display: none; }
+        pre { background: #333; color: #0f0; padding: 15px; overflow-x: auto; border-radius: 5px; font-size: 12px; }
+        h1 { color: #333; }
+        .price { color: #28a745; font-size: 24px; font-weight: bold; }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 3px; }
+        .steps { background: #e9ecef; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .pricing { background: #e9ecef; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .pricing ul { margin: 10px 0; padding-left: 20px; }
+        .pricing li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Purigen API - Data Converter</h1>
+        <p>Simple API for JSON ↔ CSV ↔ Excel ↔ XML conversion</p>
+        
+        <div class="steps">
+            <h3>⚡ How it works:</h3>
+            <p>1️⃣ Register → Get API key + 100 RUB bonus<br>
+            2️⃣ Send data via API → Get converted result<br>
+            3️⃣ Pay per request → Only for what you use</p>
+        </div>
+        
+        <div class="pricing">
+            <h3>💰 Pricing (RUB):</h3>
+            <ul>
+                <li>🎯 Single request — <strong>0.50 RUB</strong></li>
+                <li>📦 200 requests — <strong>50 RUB</strong> (0.25 RUB/request)</li>
+                <li>🚀 1,000 requests — <strong>200 RUB</strong> (0.20 RUB/request)</li>
+                <li>💎 5,000 requests — <strong>500 RUB</strong> (0.10 RUB/request)</li>
+            </ul>
+            <p>🎁 Bonus: 100 RUB on registration</p>
+            <p>🎁 50 free test requests</p>
+        </div>
+        
+        <h2>📝 Registration</h2>
+        <input type="email" id="email" placeholder="Email *">
+        <input type="text" id="company" placeholder="Company (optional)">
+        <button onclick="register()">🔑 Get API Key for Free</button>
+        
+        <div id="result" class="result">
+            <h3>✅ Your API Key:</h3>
+            <pre id="apiKey"></pre>
+            <p>💰 Balance: <strong>100 RUB</strong> (bonus)</p>
+            <hr>
+            <h3>🧪 Test JSON → CSV conversion:</h3>
+            <button onclick="testConvert()" style="background:#007bff">🚀 Run Test</button>
+            <h4>Result:</h4>
+            <pre id="convertResult"></pre>
+        </div>
+        
+        <hr>
+        <h2>📚 Usage Example</h2>
+        <pre style="background:#f4f4f4; color:#333">
+import requests
+
+API_KEY = "your_api_key_here"
+data = [{"name": "John", "age": 30}, {"name": "Maria", "age": 25}]
+
+response = requests.post(
+    "https://YOUR-API-URL.onrender.com/api/convert",
+    headers={"x-api-key": API_KEY},
+    json={"data": data, "from_format": "json", "to_format": "csv"}
+)
+
+print(response.json()["result"])
+# Output: name,age
+#         John,30
+#         Maria,25
+        </pre>
+        
+        <hr>
+        <p>📧 Questions: <a href="https://github.com/pkolodin83">GitHub@pkolodin83</a> | 📚 <a href="#">Documentation</a></p>
+    </div>
+
+    <script>
+        let API_KEY = '';
+        
+        async function register() {
+            const email = document.getElementById('email').value;
+            if (!email) {
+                alert('Enter email');
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email: email, company: document.getElementById('company').value})
+                });
+                
+                const data = await response.json();
+                API_KEY = data.api_key;
+                
+                document.getElementById('apiKey').textContent = API_KEY;
+                document.getElementById('result').style.display = 'block';
+                alert('✅ Registration successful! API key received. Balance: 100 RUB');
+            } catch(e) {
+                alert('Error: API server not running. Start with: python api_server.py');
+            }
+        }
+        
+        async function testConvert() {
+            if (!API_KEY) {
+                alert('Please register first');
+                return;
+            }
+            
+            const testData = '[{"name": "John", "age": 30, "city": "New York"}, {"name": "Maria", "age": 25, "city": "London"}]';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/convert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': API_KEY
+                    },
+                    body: JSON.stringify({
+                        data: testData,
+                        from_format: 'json',
+                        to_format: 'csv'
+                    })
+                });
+                
+                const result = await response.json();
+                document.getElementById('convertResult').textContent = result.result || JSON.stringify(result, null, 2);
+            } catch(e) {
+                document.getElementById('convertResult').textContent = 'Error: ' + e.message;
+            }
+        }
+    </script>
+</body>
+</html>
